@@ -29,7 +29,7 @@ Base = declarative_base()
 
 
 class spatial_table(Base):
-    __tablename__ = 'spatial_table'
+    __tablename__ = 'spatial_table_2'
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -53,7 +53,7 @@ c1 = spatial_table(
     geom=Point(37.5, 55.4).wkt,
 )
 
-session.add(c1)
+session.add_all([c1])
 session.commit()
 
 r = session.query(spatial_table).order_by(spatial_table.geom)
