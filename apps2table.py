@@ -65,7 +65,7 @@ def read_csv(filename: str):
     # df = df[['Наименование', 'Широта', 'geopos']]
     #
     for index, row in tqdm(df.iterrows(), total=len(df)):
-        lon, lat = ast.literal_eval(row['geopos'])['coordinates']
+        lat, lon = ast.literal_eval(row['geopos'])['coordinates']
         c1 = Apartments(
             address=row['address'],
             geopos = Point(lon, lat).wkt,
@@ -90,6 +90,7 @@ def read_csv(filename: str):
             session.commit()
     # df = df.groupby('Наименование').agg(['Широта', 'Долгота'])
     # print(df)
+
 
 
 def main():
