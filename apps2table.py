@@ -1,62 +1,12 @@
 import ast
 
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine, MetaData, ForeignKey, select, inspect
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Table, Column, Integer, String, Float, BigInteger
-from geoalchemy2 import Geometry
+from sqlalchemy import select, inspect
 from shapely.geometry import Point
 import pandas as pd
 from tqdm import tqdm
+from server import session, engine, connection
 
-PG_NAME = 'geobd'
-PG_PORT = 5432
-PG_HOST = 'localhost'
-PG_PASS = '123456'
-PG_USER = 'postgres'
-
-# Установка соединения с базой данных
-engine = create_engine(f'postgresql://{PG_USER}:{PG_PASS}@{PG_HOST}:{PG_PORT}/{PG_NAME}')
-Base = declarative_base()
-
-# Создание сессии
-Session = sessionmaker(bind=engine)
-session = Session()
-
-
-class Cities(Base):
-    __tablename__ = 'cities'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    # geopos = Column(Geometry('POLYGON'))
-    # description = Column(String)
-
-
-class Apartments(Base):
-    __tablename__ = 'apartments'
-
-    id = Column(Integer, primary_key=True)
-    address = Column(String)
-    geopos = Column(Geometry('POINT'), nullable=False)
-    description = Column(String)
-    city_id = Column(Integer, ForeignKey('cities.id'))
-    url = Column(String)
-    price_total = Column(Float)
-    floor = Column(Float)
-    separated_wc_count = Column(Float)
-    total_area = Column(Float)
-    kitchen_area = Column(Float)
-    rooms_count = Column(Float)
-    repair_type = Column(String)
-    floors_count = Column(Float)
-    build_year = Column(Float)
-    passenger_lifts_count = Column(Float)
-    price_per_unit = Column(Float)
-
-
-connection = engine.connect()
-
+from models import Cities, Apartments
 
 def read_csv(filename: str):
     df = pd.read_csv('data/cian_houses_sale.csv')

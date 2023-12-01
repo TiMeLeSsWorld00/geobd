@@ -1,3 +1,5 @@
+from typing import List
+
 from geoalchemy2 import Geography
 from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import sessionmaker
@@ -5,45 +7,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from geoalchemy2 import functions, Geometry
 from sqlalchemy import Column, Integer, String, ForeignKey, Float
 from tqdm import tqdm
+from server import Base, session, engine, connection
+from sqlalchemy import text
 
-PG_NAME = 'geobd'
-PG_PORT = 5432
-PG_HOST = 'localhost'
-PG_PASS = '123456'
-PG_USER = 'postgres'
-
-# Установка соединения с базой данных
-engine = create_engine(f'postgresql://{PG_USER}:{PG_PASS}@{PG_HOST}:{PG_PORT}/{PG_NAME}')
-Session = sessionmaker(bind=engine)
-session = Session()
-
-# Определение сущности
-Base = declarative_base()
-
-# class YourTable(Base):
-#     __tablename__  = 'Вкусно — и точка'
-#     id = Column(Integer, primary_key=True)
-#     # name = Column(String, unique=True)
-#     address = Column(String)
-#     email = Column(String)
-#     geopos = Column(Geometry('POINT'), unique=True)
-#     organization_id = Column(Integer, ForeignKey('organizations.id'))
-#
-# # Заданная точка
-# target_point = 'SRID=4326;POINT(-90.2 30.3)'
-#
-# # Запрос для получения расстояний от заданной точки до всех точек в таблице "Вкусно — и точка"
-# stmt = select(
-#     YourTable.id,
-#     func.ST_Distance(func.ST_GeogFromText(target_point), YourTable.geopos).label('distance')
-# ).order_by('distance')
-#
-# # Выполнение запроса
-# result = session.execute(stmt)
-#
-# # Вывод результатов
-# for row in result:
-#     print(f"ID: {row.id}, Расстояние: {row.distance}")
 
 def obtain_appartments():
     class Apartments(Base):
@@ -67,13 +33,8 @@ def obtain_appartments():
         price_per_unit = Column(Float)
 
     result = session.execute(select(Apartments.id, Apartments.address, Apartments.geopos))
-    # print(list(result))
-    # for row in result:
-    #     print(f"ID: {row.id}, адресс: {row.address}, геопоз: {row.geopos}")
     return list(result)
 
-
-connection = engine.connect()
 
 def make_request(orgs_names: list[str], point):
     segment = """
@@ -127,6 +88,7 @@ def calc_min_dist(organisation_name: str, target_point):
 
     return list(result)[0].distance
 
+
 def convert_geopos(geopos: str):
     from shapely.wkb import loads
     from shapely.wkt import dumps
@@ -142,29 +104,28 @@ def convert_geopos(geopos: str):
 
     return wkt_geometry
 
-def main():
-    from sqlalchemy import text
-    apps = obtain_appartments()
-    app_res = dict()
-    name = ['Вкусно — и точка', 'Цех85']
 
+def kek(names: List[str]):
     min_dist = 10e7
+    apps = obtain_appartments()
+    min_app = apps[0]
     for app in tqdm(apps):
         wkt_geometry = convert_geopos(str(app.geopos))
         # dist = calc_min_dist(name[0], wkt_geometry)
         point = wkt_geometry[:-1].split('(')[1].split(" ")
-        request = make_request(name, point)
+        request = make_request(names, point)
         result = connection.execute(text(request))
         dist = list(result)[0].sum
         if (min_dist > dist):
             min_dist = dist
+            min_app = app
             print(f"ID: {app.id}, геопоз: {app.geopos}, dist: {dist}")
 
+    return {'id': min_app.id, 'sum_dist': min_dist}
 
-    point = [55, 33]
-    request = make_request(name, point)
-    result = connection.execute(text(request))
-    print(list(result))
+
+def main():
+    print(kek(['Вкусно — и точка', 'Цех85']))
 
 if __name__ == '__main__':
     main()
