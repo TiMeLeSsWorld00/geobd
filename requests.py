@@ -31,7 +31,7 @@ def hardest(organizations: List[str], city_id: int):
 def get_organizations_list_request(city_id: int):
     stmt = select(Organizations)
     result = connection.execute(stmt)
-    return {field.id: field.name for field in result}
+    return [{'id': field.id, 'name': field.name} for field in result]
 
 
 def get_organization_request(organisation_id: int):

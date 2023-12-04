@@ -2,6 +2,7 @@ from typing import Literal, List, Dict
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Body
+from fastapi.middleware.cors import CORSMiddleware
 
 import pandas as pd
 import ast
@@ -14,6 +15,18 @@ app = FastAPI(
     title="Begemotic"
 )
 
+# Настройка CORS
+origins = [
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/api/check", status_code=200)
 def check():
@@ -30,8 +43,8 @@ def find_best_apartment(organizations: List[str], city_id: int = 1):
     return hardest(organizations, city_id)
 
 
-@app.get("/api/organizations", status_code=200, response_model=Dict[int, str],
-          description="Get organizations list ")
+@app.get("/api/organizations", status_code=200, response_model=object,
+         description="Get organizations list ")
 def get_organizations_list(city_id: int = 1):
     assert city_id >= 0
 
@@ -57,4 +70,4 @@ def aggregate_in_radius(
 
 
 if __name__ == '__main__':
-    uvicorn.run(app, host='localhost', port=8000)
+    uvicorn.run('app:app', host='localhost', port=8000, reload=True)
