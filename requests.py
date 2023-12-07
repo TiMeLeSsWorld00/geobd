@@ -8,7 +8,7 @@ from sqlalchemy import select, func
 
 from hardest import kek
 from server import Base, session, engine, connection
-from models import Organizations, Apartments
+from models import *
 
 
 def get_sql_aggr(aggr: str):
@@ -61,3 +61,50 @@ def aggregate_in_radius_request(point: Point, aggr: Literal['sum', 'avg', 'max',
     )
     result = list(session.execute(stmt))[0]
     return dict(result._mapping)
+
+
+def add_organisation_request(name=None, email=None, description=None, categories=None):
+    new_organisation = (
+        Organizations(
+            name=name,
+            email=email,
+            description=description,
+            categories=categories,
+        )
+    )
+    session.add(new_organisation)
+    session.commit()
+
+
+def add_apartment_request(address, geopos, description=None, city_id=None, url=None, price_total=None, floor=None,
+                  total_area=None, kitchen_area=None, rooms_count=None, repair_type=None,
+                  floors_count=None, build_year=None, price_per_unit=None):
+    p = Point(*geopos.coordinates).wkt
+    apartment = Apartments(
+        address=address,
+        geopos=p,
+        description=description,
+        city_id=city_id,
+        url=url,
+        price_total=price_total,
+        floor=floor,
+        total_area=total_area,
+        kitchen_area=kitchen_area,
+        rooms_count=rooms_count,
+        repair_type=repair_type,
+        floors_count=floors_count,
+        build_year=build_year,
+        price_per_unit=price_per_unit,
+    )
+    stmt = select(Apartments).where(Apartments.geopos == p)
+    if not len(list(connection.execute(stmt))):
+        session.add(apartment)
+        session.commit()
+
+
+def delete_organisation_requests():
+    return 'deleted'
+
+
+def delete_apartment_request():
+    return 'deleted'

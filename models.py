@@ -9,8 +9,8 @@ class Cities(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    # geopos = Column(Geometry('POLYGON'))
-    # description = Column(String)
+    geopos = Column(Geometry('POLYGON'))
+    description = Column(String)
 
 
 class Apartments(Base):
@@ -41,4 +41,5 @@ class Organizations(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
     email = Column(String)
-    table_name = Column(String)
+    description = Column(String)
+    categories = Column(String)

@@ -9,7 +9,8 @@ import ast
 # import h3
 import geojson_pydantic
 
-from requests import hardest, get_organizations_list_request, get_organization_request, aggregate_in_radius_request
+from requests import hardest, get_organizations_list_request, get_organization_request, aggregate_in_radius_request, \
+    add_apartment_request, add_organisation_request
 
 app = FastAPI(
     title="Begemotic"
@@ -67,6 +68,48 @@ def aggregate_in_radius(
     radius: int = Body(ge=0, le=100000, description='h3 resolution')
 ):
     return aggregate_in_radius_request(point.model_dump(), aggr, radius)
+
+
+@app.put("/api/add_organisation", status_code=200, response_model=object,
+         description="Add organisation")
+def add_organisation(name: str = None, email: str = None, description: str = None, categories: str = None):
+    add_organisation_request(name, email, description, categories)
+    return 'added'
+
+
+@app.delete("/api/delete_organisation", status_code=200, response_model=object,
+         description="Delete organisation")
+def delete_organisation(organisation_id: int = 1):
+    return "deleted"
+
+
+@app.put("/api/add_apartment", status_code=200, response_model=object,
+         description="Add apartment")
+def add_apartment(address: str, geopos: geojson_pydantic.Point, description: str = None, city_id: int = 1, url: str = None, price_total: float = None, floor: float = None,
+                  total_area: float = None, kitchen_area: float = None, rooms_count: float = None, repair_type: str = None,
+                  floors_count: float = None, build_year: str = None, price_per_unit: float = None):
+    add_apartment_request(address, geopos, description, city_id, url, price_total, floor,
+                  total_area, kitchen_area, rooms_count, repair_type,
+                  floors_count, build_year, price_per_unit)
+    return 'added'
+
+
+@app.delete("/api/delete_apartment", status_code=200, response_model=object,
+         description="Delete apartment")
+def delete_apartment(city_id: int = 1):
+    return "deleted"
+
+
+@app.get("/api/apartment/{apartment}", status_code=200, response_model=object,
+          description="Get apartment information by id")
+def get_apartment(apartment: int = 1):
+    pass
+
+
+@app.get("/api/apartments", status_code=200, response_model=object,
+         description="Get apartment list ")
+def get_apartments_list(city_id: int = 1):
+    pass
 
 
 if __name__ == '__main__':
