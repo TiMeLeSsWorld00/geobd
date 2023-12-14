@@ -1,12 +1,10 @@
-import ast
+from CRUD import add_apartment
 
-from sqlalchemy import select, inspect
 from shapely.geometry import Point
+
 import pandas as pd
 from tqdm import tqdm
-from server import session, engine, connection
-
-from models import Cities, Apartments
+import ast
 
 
 def read_csv(filename: str):
@@ -18,7 +16,7 @@ def read_csv(filename: str):
 
     for index, row in tqdm(df.iterrows(), total=len(df)):
         lat, lon = ast.literal_eval(row['geopos'])['coordinates']
-        c1 = Apartments(
+        add_apartment(
             address=row['address'],
             geopos=Point(lon, lat).wkt,
             description=row['description'],
@@ -34,14 +32,10 @@ def read_csv(filename: str):
             build_year=row['build_year'],
             price_per_unit=row['price_per_unit'],
         )
-        stmt = select(Apartments).where(Apartments.geopos == Point(lon, lat).wkt)
-        if not len(list(connection.execute(stmt))):
-            session.add(c1)
-            session.commit()
 
 
 def main():
-    read_csv('data/cian_houses_sale.csv')
+    read_csv('../data/cian_houses_sale.csv')
 
 
 if __name__ == '__main__':

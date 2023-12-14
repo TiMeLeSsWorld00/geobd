@@ -1,16 +1,11 @@
-from typing import Literal, List, Dict
+from requests import *
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 
-import pandas as pd
-import ast
-# import h3
 import geojson_pydantic
 
-from requests import hardest, get_organizations_list_request, get_organization_request, aggregate_in_radius_request, \
-    add_apartment_request, add_organisation_request, get_apartment_request
 
 app = FastAPI(
     title="GeoBD"
@@ -28,6 +23,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/api/check", status_code=200)
 def check():

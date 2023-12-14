@@ -1,7 +1,7 @@
+from server import Base
+
 from sqlalchemy import Column, Integer, String, ForeignKey, Float
 from geoalchemy2 import Geometry
-
-from server import Base
 
 
 class Cities(Base):

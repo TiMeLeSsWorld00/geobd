@@ -1,11 +1,12 @@
-from server import session, engine, connection
+from server import session, engine
 from models import *
 
-from sqlalchemy import text, inspect
+from sqlalchemy import inspect, text
 
 
 def main():
-    # connection.execute(text("CREATE EXTENSION postgis;"))
+    session.execute(text("CREATE EXTENSION postgis;"))
+    session.commit()
     if not inspect(engine).has_table("cities"):
         Cities.__table__.create(engine)
         spb = Cities(
@@ -20,9 +21,6 @@ def main():
 
     if not inspect(engine).has_table("apartments"):
         Apartments.__table__.create(engine)
-
-    # if not inspect(engine).has_table("Вкусно - и точка"):
-    #     Apartments.__table__.create(engine)
 
 
 if __name__ == '__main__':

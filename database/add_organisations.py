@@ -1,19 +1,22 @@
-from sqlalchemy import create_engine, MetaData, ForeignKey, select, inspect, Float
-from sqlalchemy import Table, Column, Integer, String
-from geoalchemy2 import Geometry
-from shapely.geometry import Point
-import pandas as pd
-from tqdm import tqdm
 from server import Base, session, engine, connection
 from models import Organizations
+from CRUD import add_organisation
+
+from sqlalchemy import ForeignKey, select, inspect, Float, Column, Integer, String
+from geoalchemy2 import Geometry
+from shapely.geometry import Point
+
+import pandas as pd
+from tqdm import tqdm
 
 
-def add_organisation(df_row):
+def add_new_organisation(df_row):
     organisation_name = df_row['Наименование']
     lon = df_row['Широта']
     lat = df_row['Долгота']
     city_id = 1
-    class Org(Base):
+
+    class Branch(Base):
         __tablename__ = organisation_name
         __table_args__ = {'extend_existing': True}
 
@@ -34,27 +37,21 @@ def add_organisation(df_row):
         website = Column(String)
         gis_url = Column(String)
 
+    add_organisation(
+        name=organisation_name,
+        email=df_row['E-mail 1'],
+        description=df_row['Описание'],
+        categories=df_row['Рубрики'],
+    )
     stmt = select(Organizations).where(Organizations.name == organisation_name)
     organisations_ref = list(connection.execute(stmt))
-    if not len(organisations_ref):
-        new_organisation = (
-            Organizations(
-                name=organisation_name,
-                email=df_row['E-mail 1'],
-                description=df_row['Описание'],
-                categories=df_row['Рубрики'],
-            )
-        )
-        session.add(new_organisation)
-        session.commit()
-        stmt = select(Organizations).where(Organizations.name == organisation_name)
-        organisations_ref = list(connection.execute(stmt))
 
     organisation_id = organisations_ref[0][0]
 
     if not inspect(engine).has_table(organisation_name):
-        Org.__table__.create(engine)
-    new_table_row = Org(
+        Branch.__table__.create(engine)
+
+    new_table_row = Branch(
         geopos=Point(lon, lat).wkt,
         organization_id=organisation_id,
         address=df_row['Адрес'],
@@ -72,22 +69,21 @@ def add_organisation(df_row):
         gis_url=df_row['2GIS URL'],
     )
 
-    stmt = select(Org).where(Org.geopos == Point(lon, lat).wkt)
+    stmt = select(Branch).where(Branch.geopos == Point(lon, lat).wkt)
     if not len(list(connection.execute(stmt))):
         session.add(new_table_row)
         session.commit()
-
 
 
 def read_csv(filename: str):
     df = pd.read_csv(filename)
     print(df.columns)
     for index, row in tqdm(df.iterrows(), total=len(df)):
-        add_organisation(row)
+        add_new_organisation(row)
 
 
 def main():
-    read_csv('data/cafe.csv')
+    read_csv('../data/cafe.csv')
 
 
 if __name__ == '__main__':

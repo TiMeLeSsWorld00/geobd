@@ -1,14 +1,13 @@
-from typing import List, Literal
+from database.hardest import kek
+from database.server import session, connection
+from database.models import *
+from database.CRUD import add_organisation
 
-import pandas as pd
-from geoalchemy2 import functions
-from geoalchemy2.shape import from_shape
-from shapely.geometry import Point, mapping
 from sqlalchemy import select, func
+from geoalchemy2 import functions
+from shapely.geometry import Point
 
-from hardest import kek, convert_geopos
-from server import Base, session, engine, connection
-from models import *
+from typing import List, Literal
 
 
 def get_sql_aggr(aggr: str):
@@ -52,7 +51,6 @@ def aggregate_in_radius_request(point: Point, aggr: Literal['sum', 'avg', 'max',
     lon, lat = point['coordinates']
     sql_aggr = get_sql_aggr(aggr)
     point_str = f'POINT({lon} {lat})'
-    # point_wkt = Point([(50.854457, 4.377184)])
     stmt = session.query(
         sql_aggr(Apartments.price_total).label('price_total'),
         sql_aggr(Apartments.floor).label('floor'),
@@ -72,16 +70,12 @@ def aggregate_in_radius_request(point: Point, aggr: Literal['sum', 'avg', 'max',
 
 
 def add_organisation_request(name=None, email=None, description=None, categories=None):
-    new_organisation = (
-        Organizations(
-            name=name,
-            email=email,
-            description=description,
-            categories=categories,
-        )
+    add_organisation(
+        name=name,
+        email=email,
+        description=description,
+        categories=categories
     )
-    session.add(new_organisation)
-    session.commit()
 
 
 def add_apartment_request(address, geopos, description=None, city_id=None, url=None, price_total=None, floor=None,
