@@ -3,10 +3,10 @@ from typing import List, Literal
 import pandas as pd
 from geoalchemy2 import functions
 from geoalchemy2.shape import from_shape
-from shapely.geometry import Point
+from shapely.geometry import Point, mapping
 from sqlalchemy import select, func
 
-from hardest import kek
+from hardest import kek, convert_geopos
 from server import Base, session, engine, connection
 from models import *
 
@@ -40,6 +40,14 @@ def get_organization_request(organisation_id: int):
     return dict(list(result)[0]._mapping)
 
 
+def get_apartment_request(apartment: int):
+    stmt = select(Apartments).where(Apartments.id == apartment)
+    result = connection.execute(stmt)
+    k = dict(list(result)[0]._mapping)
+    k.pop('geopos')
+    return k
+
+
 def aggregate_in_radius_request(point: Point, aggr: Literal['sum', 'avg', 'max', 'min'], radius: int):
     lon, lat = point['coordinates']
     sql_aggr = get_sql_aggr(aggr)
@@ -57,7 +65,7 @@ def aggregate_in_radius_request(point: Point, aggr: Literal['sum', 'avg', 'max',
         sql_aggr(Apartments.passenger_lifts_count).label('passenger_lifts_count'),
         sql_aggr(Apartments.price_per_unit).label('price_per_unit'),
     ).filter(
-        functions.ST_DWithin(Apartments.geopos, point_str, radius)
+        functions.ST_DWithin(Apartments.geopos, point_str, radius/3000)
     )
     result = list(session.execute(stmt))[0]
     return dict(result._mapping)

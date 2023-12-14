@@ -18,11 +18,11 @@ def main():
     if not inspect(engine).has_table("organizations"):
         Organizations.__table__.create(engine)
 
-    # if not inspect(engine).has_table("apartments"):
-    #     Apartments.__table__.create(engine)
-
-    if not inspect(engine).has_table("Вкусно - и точка"):
+    if not inspect(engine).has_table("apartments"):
         Apartments.__table__.create(engine)
+
+    # if not inspect(engine).has_table("Вкусно - и точка"):
+    #     Apartments.__table__.create(engine)
 
 
 if __name__ == '__main__':

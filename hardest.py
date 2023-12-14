@@ -7,31 +7,13 @@ from sqlalchemy.ext.declarative import declarative_base
 from geoalchemy2 import functions, Geometry
 from sqlalchemy import Column, Integer, String, ForeignKey, Float
 from tqdm import tqdm
+
+from models import Apartments
 from server import Base, session, engine, connection
 from sqlalchemy import text
 
 
 def obtain_appartments():
-    class Apartments(Base):
-        __tablename__ = 'apartments'
-        id = Column(Integer, primary_key=True)
-        address = Column(String)
-        geopos = Column(Geometry('POINT'), nullable=False)
-        description = Column(String)
-        city_id = Column(Integer, ForeignKey('cities.id'))
-        url = Column(String)
-        price_total = Column(Float)
-        floor = Column(Float)
-        separated_wc_count = Column(Float)
-        total_area = Column(Float)
-        kitchen_area = Column(Float)
-        rooms_count = Column(Float)
-        repair_type = Column(String)
-        floors_count = Column(Float)
-        build_year = Column(Float)
-        passenger_lifts_count = Column(Float)
-        price_per_unit = Column(Float)
-
     result = session.execute(select(Apartments.id, Apartments.address, Apartments.geopos))
     return list(result)
 
@@ -81,7 +63,7 @@ def calc_min_dist(organisation_name: str, target_point):
     stmt = select(
         YourTable.id,
         func.ST_Distance(func.ST_GeogFromText(target_point), YourTable.geopos).label('distance')
-    ).order_by('distance')
+    ).order_by('distance', )
 
     # Выполнение запроса
     result = connection.execute(stmt)
@@ -119,6 +101,7 @@ def kek(names: List[str]):
         if (min_dist > dist):
             min_dist = dist
             min_app = app
+            print(min_app)
             print(f"ID: {app.id}, геопоз: {app.geopos}, dist: {dist}")
 
     return {'id': min_app.id, 'sum_dist': min_dist}

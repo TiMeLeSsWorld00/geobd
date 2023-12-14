@@ -10,10 +10,10 @@ import ast
 import geojson_pydantic
 
 from requests import hardest, get_organizations_list_request, get_organization_request, aggregate_in_radius_request, \
-    add_apartment_request, add_organisation_request
+    add_apartment_request, add_organisation_request, get_apartment_request
 
 app = FastAPI(
-    title="Begemotic"
+    title="GeoBD"
 )
 
 # Настройка CORS
@@ -103,7 +103,7 @@ def delete_apartment(city_id: int = 1):
 @app.get("/api/apartment/{apartment}", status_code=200, response_model=object,
           description="Get apartment information by id")
 def get_apartment(apartment: int = 1):
-    pass
+    return get_apartment_request(apartment)
 
 
 @app.get("/api/apartments", status_code=200, response_model=object,
