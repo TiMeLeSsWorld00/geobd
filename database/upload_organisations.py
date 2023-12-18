@@ -1,6 +1,5 @@
 from server import Base, session, engine, connection
-from models import Organizations
-from CRUD import add_organisation
+from CRUD import add_organisation, get_organisation_by_name
 
 from sqlalchemy import ForeignKey, select, inspect, Float, Column, Integer, String
 from geoalchemy2 import Geometry
@@ -43,8 +42,8 @@ def add_new_organisation(df_row):
         description=df_row['Описание'],
         categories=df_row['Рубрики'],
     )
-    stmt = select(Organizations).where(Organizations.name == organisation_name)
-    organisations_ref = list(connection.execute(stmt))
+
+    organisations_ref = get_organisation_by_name(organisation_name)
 
     organisation_id = organisations_ref[0][0]
 

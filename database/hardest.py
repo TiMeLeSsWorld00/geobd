@@ -4,7 +4,7 @@ from sqlalchemy import select, func, text, Column, Integer, String, ForeignKey
 from geoalchemy2 import Geometry
 from tqdm import tqdm
 
-from models import Apartments
+from database.models import Apartments
 from database.server import Base, session, connection
 
 

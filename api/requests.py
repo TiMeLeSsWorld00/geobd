@@ -1,7 +1,9 @@
+from api.schemas import ApartmentSchema
 from database.hardest import kek
 from database.server import session, connection
 from database.models import *
-from database.CRUD import add_organisation
+from database.CRUD import add_organisation, add_apartment, get_organisation_by_id, get_apartment_by_id, \
+    delete_organization_by_id, delete_apartment_by_id
 
 from sqlalchemy import select, func
 from geoalchemy2 import functions
@@ -33,18 +35,20 @@ def get_organizations_list_request(city_id: int):
     return [{'id': field.id, 'name': field.name} for field in result]
 
 
+def get_apartments_list_request(city_id: int):
+    stmt = select(Apartments)
+    result = connection.execute(stmt)
+    return [{'id': field.id, 'address': field.address, 'description': field.description} for field in list(result)[:100]]
+
+
 def get_organization_request(organisation_id: int):
-    stmt = select(Organizations).where(Organizations.id == organisation_id)
-    result = connection.execute(stmt)
-    return dict(list(result)[0]._mapping)
+    return dict(get_organisation_by_id(organisation_id)[0]._mapping)
 
 
-def get_apartment_request(apartment: int):
-    stmt = select(Apartments).where(Apartments.id == apartment)
-    result = connection.execute(stmt)
-    k = dict(list(result)[0]._mapping)
-    k.pop('geopos')
-    return k
+def get_apartment_request(apartment_id: int):
+    result = dict(get_apartment_by_id(apartment_id)[0]._mapping)
+    result.pop('geopos')
+    return result
 
 
 def aggregate_in_radius_request(point: Point, aggr: Literal['sum', 'avg', 'max', 'min'], radius: int):
@@ -78,35 +82,29 @@ def add_organisation_request(name=None, email=None, description=None, categories
     )
 
 
-def add_apartment_request(address, geopos, description=None, city_id=None, url=None, price_total=None, floor=None,
-                  total_area=None, kitchen_area=None, rooms_count=None, repair_type=None,
-                  floors_count=None, build_year=None, price_per_unit=None):
-    p = Point(*geopos.coordinates).wkt
-    apartment = Apartments(
-        address=address,
+def add_apartment_request(data: ApartmentSchema):
+    p = Point(*data.geopos.coordinates).wkt
+    add = add_apartment(
+        address=data.address,
         geopos=p,
-        description=description,
-        city_id=city_id,
-        url=url,
-        price_total=price_total,
-        floor=floor,
-        total_area=total_area,
-        kitchen_area=kitchen_area,
-        rooms_count=rooms_count,
-        repair_type=repair_type,
-        floors_count=floors_count,
-        build_year=build_year,
-        price_per_unit=price_per_unit,
+        description=data.description,
+        city_id=data.city_id,
+        url=data.url,
+        price_total=data.price_total,
+        floor=data.floor,
+        total_area=data.total_area,
+        kitchen_area=data.kitchen_area,
+        rooms_count=data.rooms_count,
+        repair_type=data.repair_type,
+        floors_count=data.floors_count,
+        build_year=data.build_year,
+        price_per_unit=data.price_per_unit,
     )
-    stmt = select(Apartments).where(Apartments.geopos == p)
-    if not len(list(connection.execute(stmt))):
-        session.add(apartment)
-        session.commit()
+    return 'added' if add else 'adding failed'
+
+def delete_organisation_requests(organization_id):
+    return "deleted successfully" if delete_organization_by_id(organization_id) else "deleting failed"
 
 
-def delete_organisation_requests():
-    return 'deleted'
-
-
-def delete_apartment_request():
-    return 'deleted'
+def delete_apartment_request(apartment_id):
+    return "deleted successfully" if delete_apartment_by_id(apartment_id) else "deleting failed"
