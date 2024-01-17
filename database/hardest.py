@@ -39,6 +39,35 @@ def make_request(orgs_names: list[str], point):
     return query
 
 
+def orgs_geoposes(orgs_names: list[str], target_point):
+    ans = []
+    for organisation_name in orgs_names:
+        class YourTable(Base):
+            __tablename__ = organisation_name
+            __table_args__ = {'extend_existing': True}
+
+            id = Column(Integer, primary_key=True)
+            address = Column(String)
+            email = Column(String)
+            geopos = Column(Geometry('POINT'), unique=True)
+            organization_id = Column(Integer, ForeignKey('organizations.id'))
+
+        # Запрос для получения расстояний от заданной точки до всех точек в таблице "Вкусно — и точка"
+        stmt = select(
+            YourTable.id,
+            YourTable.geopos,
+            func.ST_Distance(func.ST_GeogFromText(target_point), YourTable.geopos).label('distance')
+        ).order_by('distance', )
+
+        # Выполнение запроса
+        result = list(connection.execute(stmt))[0]
+        lon, lat = convert_geopos(str(result.geopos))[:-1].split('(')[1].split(" ")
+        distance = result.distance
+        ans.append({'name': organisation_name, 'geopos': [lat, lon], 'dist': distance})
+    print(ans)
+    return ans
+
+
 def calc_min_dist(organisation_name: str, target_point):
     class YourTable(Base):
         __tablename__  = organisation_name
@@ -93,8 +122,10 @@ def kek(names: List[str]):
             min_app = app
             print(min_app)
             print(f"ID: {app.id}, геопоз: {app.geopos}, dist: {dist}")
-
-    return {'id': min_app.id, 'sum_dist': min_dist}
+    best_geopos = convert_geopos(str(min_app.geopos))
+    lon, lat = best_geopos[:-1].split('(')[1].split(" ")
+    orgs_data = orgs_geoposes(names, best_geopos)
+    return {'id': min_app.id, 'sum_dist': min_dist, 'geopos': [lat, lon], 'orgs_data': orgs_data}
 
 
 # пайплайн
